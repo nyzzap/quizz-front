@@ -1,5 +1,5 @@
 import { GET_GLOBAL_QUIZ_LIST, GET_QUESTIONS_QUIZ, SET_CURRENT_PLAY_QUIZ
-,SET_CURRENT_PLAY_QUIZ_QUESTION, SET_CURRENT_PLAY_QUIZ_ANSWER, ADD_QUIZ_SUCCESS, ADD_QUIZ } from '../actions/types';
+,SET_CURRENT_PLAY_QUIZ_QUESTION, SET_CURRENT_PLAY_QUIZ_ANSWER, ADD_QUIZ_SUCCESS, ADD_QUIZ, GET_MY_QUIZ_LIST } from '../actions/types';
 
 const initialState = {
     globalQuizHeadList: {},
@@ -16,6 +16,11 @@ export default function (state = initialState, action) {
                 ...state,
                 globalQuizHeadList: action.payload.quiz
             }
+        case GET_MY_QUIZ_LIST:
+                return {
+                    ...state,
+                    globalQuizHeadList: action.payload.quiz
+                }
         case GET_QUESTIONS_QUIZ:
             return {
                 ...state,

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 
-import { Button, Row, Card, Col } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import { setCurrentPlayQuestionAnswer } from '../actions/quiz';
 
 class PlayQuestion extends Component {
@@ -81,7 +81,7 @@ class PlayQuestion extends Component {
                 </div>
                 <div style={{ marginBottom: '15px', textAlign: 'center' }} className="form-group">
                     <button type="submit" className="btn btn-primary">
-                        Send2
+                        Send
                     </button>
                 </div>
             </form>

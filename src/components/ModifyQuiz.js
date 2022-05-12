@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 
 import { Button, Row, Card, Col, Form } from 'react-bootstrap';
-import { createQuiz } from '../actions/quiz';
+import { updateQuiz, playModifyQuiz } from '../actions/quiz';
 
 const initialState = {
     listQuestions: [],
@@ -19,7 +19,7 @@ const initialState = {
     typeQ: false,
     errors: {}
 };
-class CreateQuiz extends Component {
+class ModifyQuiz extends Component {
     constructor() {
         super();
         this.state = { ...initialState };
@@ -30,7 +30,60 @@ class CreateQuiz extends Component {
 
         this.removeOption = this.removeOption.bind(this);
         this.setOptionAnswer = this.setOptionAnswer.bind(this);
+        this.setCurrentQuestion = this.setCurrentQuestion.bind(this);
+        this.deleteQuestion = this.deleteQuestion.bind(this);
+        
+    }
+    deleteQuestion(e, idx){
+        e.preventDefault();
+        var arrayTempQuestions = this.state.listQuestions;
 
+        if(idx > -1){
+            arrayTempQuestions.splice(idx, 1);
+            this.setState({
+                listQuestions: arrayTempQuestions
+            });
+        }
+    }
+    setCurrentQuestion(e, question){
+        e.preventDefault();
+        var arrayOptions = [];
+        //SET QUESTION
+        this.setState({
+            textQ: question.text,
+            typeQ: question.type
+        });
+        if(question.type){
+            arrayOptions = question.options;
+            if (arrayOptions && arrayOptions.length > 1) {
+                var index = arrayOptions.findIndex((element) => element.isCorrect);
+                if (index !== -1){
+                    this.setState({
+                        optionAnswer: arrayOptions[index].text 
+                    });
+                }
+               
+            }
+            //SET OPTIONS
+            this.setState({
+                options: question.options
+            });
+        }else{
+             //SET OPTIONS
+             this.setState({
+                options: []
+            });
+        }
+        //DELETE CURRENT QUESTION
+        var arrayTempQuestions = this.state.listQuestions;
+
+        var indexQuestion = arrayTempQuestions.findIndex((element) => element.text == question.text);
+        if(indexQuestion != -1){
+            arrayTempQuestions.splice(indexQuestion, 1);
+            this.setState({
+                listQuestions: arrayTempQuestions
+            });
+        }
     }
     setOptionAnswer(answerIn) {
         this.setState({
@@ -49,11 +102,12 @@ class CreateQuiz extends Component {
                     }
                 });
                 const quizModel = {
+                    _id: this.props.quizHeadDetail._id,
                     title: this.state.title,
                     description: this.state.description,
                     questions: mapQuestions
                 }
-                this.props.createQuiz(quizModel, this.props.history);
+                this.props.updateQuiz(quizModel, this.props.history);
                 this.setState(initialState);
             }else{
                 this.setState({
@@ -80,16 +134,19 @@ class CreateQuiz extends Component {
         } else {
             if (this.state.textQ && this.state.textQ != '') {
                 if ((!this.state.typeQ) || (this.state.optionAnswer && this.state.optionAnswer != '')) {
-                    // MultiChoice
+                    // MultiChoice  
                     var arrayOptions = [];
                     if (this.state.typeQ) {
                         //Verify lenght options 
-                        arrayOptions = this.state.options;
+                        arrayOptions = this.state.options.map((element,i)=> {return{ isCorrect: false, text: element.text}} );
                         if (arrayOptions.length > 1 && arrayOptions.length <= 10) {
                             //SET The correctAnswer to optionArray
                             var index = arrayOptions.findIndex((element) => element.text == this.state.optionAnswer);
-                            if (index !== -1)
+                            if (index !== -1){
                                 arrayOptions[index].isCorrect = true;
+
+                            }
+                                
 
                         } else {
                             this.setState({
@@ -180,9 +237,14 @@ class CreateQuiz extends Component {
         })
     }
     componentDidMount() {
-
+        this.setState({
+            title: this.props.quizHeadDetail.title,
+            description: this.props.quizHeadDetail.description,
+            listQuestions: this.props.quizDetail
+        });
     }
     componentWillReceiveProps(nextProps) {
+     
 
         if (nextProps.errors) {
             this.setState({
@@ -191,7 +253,7 @@ class CreateQuiz extends Component {
         }
     }
     render() {
-        const { listQuestions, title, description, textQ, typeQ, textOption, options, errors } = this.state;
+        const { listQuestions, title, description, textQ, typeQ, textOption, options, errors, optionAnswer } = this.state;
         const AddQuestionForm = (
             <Card style={{ width: '35rem', marginTop: '15px' }}>
                 <Card.Header as="h5">ADD Question</Card.Header>
@@ -260,9 +322,11 @@ class CreateQuiz extends Component {
                                                             <h5 >
                                                                 <input
                                                                     type="radio"
-                                                                    value={optionItem.text}
+                                                                   // value={optionItem.text}
+                                                                    checked={optionItem.text == optionAnswer}
                                                                     name='OptionsRadio'
                                                                     onClick={() => this.setOptionAnswer(optionItem.text)}
+                                                                    onChange={() => this.handleInputChange}
                                                                 />
                                                                 &nbsp;
                                                                 {optionItem.text}
@@ -364,11 +428,22 @@ class CreateQuiz extends Component {
                             {
                                 listQuestions?.map(function (questionItem, idx) {
                                     return (
-                                        <Card style={{ width: '35rem' }} key={idx}>
+                                        <Card style={{ width: '60rem' }} key={idx}>
                                             <Card.Body>
                                                 <Card.Text>
+                                                    <Row  style={{ textAlign: 'center' }}>
+                                                    <h5>Question {idx + 1}</h5>
+                                                    </Row>
+                                                    <Row style={{ verticalAlign: 'center'}}>
+                                                    <Col xs={8}><h5>{questionItem.text}</h5></Col>
+                                                    <Col xs={4}>
+                                                            <Button variant="warning" onClick={(e) => this.setCurrentQuestion(e, questionItem)}>UPDATE</Button>
+                                                            <Button variant="danger" onClick={(e) => this.deleteQuestion(e, idx)}>DELETE</Button>
 
-                                                    <h5>Question {idx + 1}: {questionItem.text}</h5>
+                                                            
+                                                    </Col>
+                                                   
+                                                    </Row>
                                                     {questionItem.type ?
                                                         <> <br />Options:
                                                             {
@@ -402,11 +477,15 @@ class CreateQuiz extends Component {
     }
 }
 
-CreateQuiz.propTypes = {
-    createQuiz: PropTypes.func.isRequired,
+ModifyQuiz.propTypes = {
+    updateQuiz: PropTypes.func.isRequired,
+    playModifyQuiz: PropTypes.func.isRequired,
+    quizDetail: PropTypes.array.isRequired,
     errors: PropTypes.object.isRequired
 }
 const mapStateToProps = state => ({
+    quizHeadDetail: state.quiz.quizHeadDetail, 
+    quizDetail: state.quiz.quizDetail,
     errors: state.errors
 });
-export default connect(mapStateToProps, { createQuiz })(CreateQuiz);
+export default connect(mapStateToProps, { updateQuiz, playModifyQuiz })(ModifyQuiz);
